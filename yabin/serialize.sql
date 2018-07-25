@@ -320,3 +320,75 @@ FROM atec_1000w_oota_data AOD
     ON coalesce(AOD.card_cert_city, '') = coalesce(CD_card_cert.city, '')
     INNER JOIN City_Dict CD
     ON coalesce(AOD.city, '') = coalesce(CD.city, '');
+    
+--=========================================================
+-- add columns like ip_prov=cert_prov and ip_city=cert_city
+--=========================================================
+
+CREATE TABLE training_yabin AS
+SELECT *
+	, CASE WHEN ip_prov=1 OR cert_prov=1 THEN -1 WHEN ip_prov!=cert_prov THEN 0 ELSE 1 END AS ip_prov_vs_cert_prov
+    , CASE WHEN ip_prov=1 OR card_bin_prov=1 THEN -1 WHEN ip_prov!=card_bin_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_bin_prov
+    , CASE WHEN ip_prov=1 OR card_mobile_prov=1 THEN -1 WHEN ip_prov!=card_mobile_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_mobile_prov
+    , CASE WHEN ip_prov=1 OR card_cert_prov=1 THEN -1 WHEN ip_prov!=card_cert_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_cert_prov
+    , CASE WHEN ip_prov=1 OR province=1 THEN -1 WHEN ip_prov!=province THEN 0 ELSE 1 END AS ip_prov_vs_province
+    , CASE WHEN cert_prov=1 OR card_bin_prov=1 THEN -1 WHEN cert_prov!=card_bin_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_bin_prov
+    , CASE WHEN cert_prov=1 OR card_mobile_prov=1 THEN -1 WHEN cert_prov!=card_mobile_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_mobile_prov
+    , CASE WHEN cert_prov=1 OR card_cert_prov=1 THEN -1 WHEN cert_prov!=card_cert_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_cert_prov
+    , CASE WHEN cert_prov=1 OR province=1 THEN -1 WHEN cert_prov!=province THEN 0 ELSE 1 END AS cert_prov_vs_province
+    , CASE WHEN card_bin_prov=1 OR card_mobile_prov=1 THEN -1 WHEN card_bin_prov!=card_mobile_prov THEN 0 ELSE 1 END AS card_bin_prov_vs_card_mobile_prov
+    , CASE WHEN card_bin_prov=1 OR card_cert_prov=1 THEN -1 WHEN card_bin_prov!=card_cert_prov THEN 0 ELSE 1 END AS card_bin_prov_vs_card_cert_prov
+    , CASE WHEN card_bin_prov=1 OR province=1 THEN -1 WHEN card_bin_prov!=province THEN 0 ELSE 1 END AS card_bin_prov_vs_province
+    , CASE WHEN card_mobile_prov=1 OR card_cert_prov=1 THEN -1 WHEN card_mobile_prov!=card_cert_prov THEN 0 ELSE 1 END AS card_mobile_prov_vs_card_cert_prov
+    , CASE WHEN card_mobile_prov=1 OR province=1 THEN -1 WHEN card_mobile_prov!=province THEN 0 ELSE 1 END AS card_mobile_prov_vs_province
+    , CASE WHEN card_cert_prov=1 OR province=1 THEN -1 WHEN card_cert_prov!=province THEN 0 ELSE 1 END AS card_cert_prov_vs_province
+    , CASE WHEN ip_city=1 OR cert_city=1 THEN -1 WHEN ip_city!=cert_city THEN 0 ELSE 1 END AS ip_city_vs_cert_city
+    , CASE WHEN ip_city=1 OR card_bin_city=1 THEN -1 WHEN ip_city!=card_bin_city THEN 0 ELSE 1 END AS ip_city_vs_card_bin_city
+    , CASE WHEN ip_city=1 OR card_mobile_city=1 THEN -1 WHEN ip_city!=card_mobile_city THEN 0 ELSE 1 END AS ip_city_vs_card_mobile_city
+    , CASE WHEN ip_city=1 OR card_cert_city=1 THEN -1 WHEN ip_city!=card_cert_city THEN 0 ELSE 1 END AS ip_city_vs_card_cert_city
+    , CASE WHEN ip_city=1 OR city=1 THEN -1 WHEN ip_city!=city THEN 0 ELSE 1 END AS ip_city_vs_city
+    , CASE WHEN cert_city=1 OR card_bin_city=1 THEN -1 WHEN cert_city!=card_bin_city THEN 0 ELSE 1 END AS cert_city_vs_card_bin_city
+    , CASE WHEN cert_city=1 OR card_mobile_city=1 THEN -1 WHEN cert_city!=card_mobile_city THEN 0 ELSE 1 END AS cert_city_vs_card_mobile_city
+    , CASE WHEN cert_city=1 OR card_cert_city=1 THEN -1 WHEN cert_city!=card_cert_city THEN 0 ELSE 1 END AS cert_city_vs_card_cert_city
+    , CASE WHEN cert_city=1 OR city=1 THEN -1 WHEN cert_city!=city THEN 0 ELSE 1 END AS cert_city_vs_city
+    , CASE WHEN card_bin_city=1 OR card_mobile_city=1 THEN -1 WHEN card_bin_city!=card_mobile_city THEN 0 ELSE 1 END AS card_bin_city_vs_card_mobile_city
+    , CASE WHEN card_bin_city=1 OR card_cert_city=1 THEN -1 WHEN card_bin_city!=card_cert_city THEN 0 ELSE 1 END AS card_bin_city_vs_card_cert_city
+    , CASE WHEN card_bin_city=1 OR city=1 THEN -1 WHEN card_bin_city!=city THEN 0 ELSE 1 END AS card_bin_city_vs_city
+    , CASE WHEN card_mobile_city=1 OR card_cert_city=1 THEN -1 WHEN card_mobile_city!=card_cert_city THEN 0 ELSE 1 END AS card_mobile_city_vs_card_cert_city
+    , CASE WHEN card_mobile_city=1 OR city=1 THEN -1 WHEN card_mobile_city!=city THEN 0 ELSE 1 END AS card_mobile_city_vs_city
+    , CASE WHEN card_cert_city=1 OR city=1 THEN -1 WHEN card_cert_city!=city THEN 0 ELSE 1 END AS card_cert_city_vs_city		
+FROM serialized_training
+
+CREATE TABLE test_yabin AS
+SELECT *
+	, CASE WHEN ip_prov=1 OR cert_prov=1 THEN -1 WHEN ip_prov!=cert_prov THEN 0 ELSE 1 END AS ip_prov_vs_cert_prov
+    , CASE WHEN ip_prov=1 OR card_bin_prov=1 THEN -1 WHEN ip_prov!=card_bin_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_bin_prov
+    , CASE WHEN ip_prov=1 OR card_mobile_prov=1 THEN -1 WHEN ip_prov!=card_mobile_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_mobile_prov
+    , CASE WHEN ip_prov=1 OR card_cert_prov=1 THEN -1 WHEN ip_prov!=card_cert_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_cert_prov
+    , CASE WHEN ip_prov=1 OR province=1 THEN -1 WHEN ip_prov!=province THEN 0 ELSE 1 END AS ip_prov_vs_province
+    , CASE WHEN cert_prov=1 OR card_bin_prov=1 THEN -1 WHEN cert_prov!=card_bin_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_bin_prov
+    , CASE WHEN cert_prov=1 OR card_mobile_prov=1 THEN -1 WHEN cert_prov!=card_mobile_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_mobile_prov
+    , CASE WHEN cert_prov=1 OR card_cert_prov=1 THEN -1 WHEN cert_prov!=card_cert_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_cert_prov
+    , CASE WHEN cert_prov=1 OR province=1 THEN -1 WHEN cert_prov!=province THEN 0 ELSE 1 END AS cert_prov_vs_province
+    , CASE WHEN card_bin_prov=1 OR card_mobile_prov=1 THEN -1 WHEN card_bin_prov!=card_mobile_prov THEN 0 ELSE 1 END AS card_bin_prov_vs_card_mobile_prov
+    , CASE WHEN card_bin_prov=1 OR card_cert_prov=1 THEN -1 WHEN card_bin_prov!=card_cert_prov THEN 0 ELSE 1 END AS card_bin_prov_vs_card_cert_prov
+    , CASE WHEN card_bin_prov=1 OR province=1 THEN -1 WHEN card_bin_prov!=province THEN 0 ELSE 1 END AS card_bin_prov_vs_province
+    , CASE WHEN card_mobile_prov=1 OR card_cert_prov=1 THEN -1 WHEN card_mobile_prov!=card_cert_prov THEN 0 ELSE 1 END AS card_mobile_prov_vs_card_cert_prov
+    , CASE WHEN card_mobile_prov=1 OR province=1 THEN -1 WHEN card_mobile_prov!=province THEN 0 ELSE 1 END AS card_mobile_prov_vs_province
+    , CASE WHEN card_cert_prov=1 OR province=1 THEN -1 WHEN card_cert_prov!=province THEN 0 ELSE 1 END AS card_cert_prov_vs_province
+    , CASE WHEN ip_city=1 OR cert_city=1 THEN -1 WHEN ip_city!=cert_city THEN 0 ELSE 1 END AS ip_city_vs_cert_city
+    , CASE WHEN ip_city=1 OR card_bin_city=1 THEN -1 WHEN ip_city!=card_bin_city THEN 0 ELSE 1 END AS ip_city_vs_card_bin_city
+    , CASE WHEN ip_city=1 OR card_mobile_city=1 THEN -1 WHEN ip_city!=card_mobile_city THEN 0 ELSE 1 END AS ip_city_vs_card_mobile_city
+    , CASE WHEN ip_city=1 OR card_cert_city=1 THEN -1 WHEN ip_city!=card_cert_city THEN 0 ELSE 1 END AS ip_city_vs_card_cert_city
+    , CASE WHEN ip_city=1 OR city=1 THEN -1 WHEN ip_city!=city THEN 0 ELSE 1 END AS ip_city_vs_city
+    , CASE WHEN cert_city=1 OR card_bin_city=1 THEN -1 WHEN cert_city!=card_bin_city THEN 0 ELSE 1 END AS cert_city_vs_card_bin_city
+    , CASE WHEN cert_city=1 OR card_mobile_city=1 THEN -1 WHEN cert_city!=card_mobile_city THEN 0 ELSE 1 END AS cert_city_vs_card_mobile_city
+    , CASE WHEN cert_city=1 OR card_cert_city=1 THEN -1 WHEN cert_city!=card_cert_city THEN 0 ELSE 1 END AS cert_city_vs_card_cert_city
+    , CASE WHEN cert_city=1 OR city=1 THEN -1 WHEN cert_city!=city THEN 0 ELSE 1 END AS cert_city_vs_city
+    , CASE WHEN card_bin_city=1 OR card_mobile_city=1 THEN -1 WHEN card_bin_city!=card_mobile_city THEN 0 ELSE 1 END AS card_bin_city_vs_card_mobile_city
+    , CASE WHEN card_bin_city=1 OR card_cert_city=1 THEN -1 WHEN card_bin_city!=card_cert_city THEN 0 ELSE 1 END AS card_bin_city_vs_card_cert_city
+    , CASE WHEN card_bin_city=1 OR city=1 THEN -1 WHEN card_bin_city!=city THEN 0 ELSE 1 END AS card_bin_city_vs_city
+    , CASE WHEN card_mobile_city=1 OR card_cert_city=1 THEN -1 WHEN card_mobile_city!=card_cert_city THEN 0 ELSE 1 END AS card_mobile_city_vs_card_cert_city
+    , CASE WHEN card_mobile_city=1 OR city=1 THEN -1 WHEN card_mobile_city!=city THEN 0 ELSE 1 END AS card_mobile_city_vs_city
+    , CASE WHEN card_cert_city=1 OR city=1 THEN -1 WHEN card_cert_city!=city THEN 0 ELSE 1 END AS card_cert_city_vs_city		
+FROM serialized_test
