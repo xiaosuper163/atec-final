@@ -324,41 +324,105 @@ FROM atec_1000w_oota_data AOD
 --=========================================================
 -- add columns like ip_prov=cert_prov and ip_city=cert_city
 --=========================================================
-
+DROP TABLE IF EXISTS training_yabin;
 CREATE TABLE training_yabin AS
-SELECT *
-	, CASE WHEN ip_prov=1 OR cert_prov=1 THEN -1 WHEN ip_prov!=cert_prov THEN 0 ELSE 1 END AS ip_prov_vs_cert_prov
-    , CASE WHEN ip_prov=1 OR card_bin_prov=1 THEN -1 WHEN ip_prov!=card_bin_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_bin_prov
-    , CASE WHEN ip_prov=1 OR card_mobile_prov=1 THEN -1 WHEN ip_prov!=card_mobile_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_mobile_prov
-    , CASE WHEN ip_prov=1 OR card_cert_prov=1 THEN -1 WHEN ip_prov!=card_cert_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_cert_prov
-    , CASE WHEN ip_prov=1 OR province=1 THEN -1 WHEN ip_prov!=province THEN 0 ELSE 1 END AS ip_prov_vs_province
-    , CASE WHEN cert_prov=1 OR card_bin_prov=1 THEN -1 WHEN cert_prov!=card_bin_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_bin_prov
-    , CASE WHEN cert_prov=1 OR card_mobile_prov=1 THEN -1 WHEN cert_prov!=card_mobile_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_mobile_prov
-    , CASE WHEN cert_prov=1 OR card_cert_prov=1 THEN -1 WHEN cert_prov!=card_cert_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_cert_prov
-    , CASE WHEN cert_prov=1 OR province=1 THEN -1 WHEN cert_prov!=province THEN 0 ELSE 1 END AS cert_prov_vs_province
-    , CASE WHEN card_bin_prov=1 OR card_mobile_prov=1 THEN -1 WHEN card_bin_prov!=card_mobile_prov THEN 0 ELSE 1 END AS card_bin_prov_vs_card_mobile_prov
-    , CASE WHEN card_bin_prov=1 OR card_cert_prov=1 THEN -1 WHEN card_bin_prov!=card_cert_prov THEN 0 ELSE 1 END AS card_bin_prov_vs_card_cert_prov
-    , CASE WHEN card_bin_prov=1 OR province=1 THEN -1 WHEN card_bin_prov!=province THEN 0 ELSE 1 END AS card_bin_prov_vs_province
-    , CASE WHEN card_mobile_prov=1 OR card_cert_prov=1 THEN -1 WHEN card_mobile_prov!=card_cert_prov THEN 0 ELSE 1 END AS card_mobile_prov_vs_card_cert_prov
-    , CASE WHEN card_mobile_prov=1 OR province=1 THEN -1 WHEN card_mobile_prov!=province THEN 0 ELSE 1 END AS card_mobile_prov_vs_province
-    , CASE WHEN card_cert_prov=1 OR province=1 THEN -1 WHEN card_cert_prov!=province THEN 0 ELSE 1 END AS card_cert_prov_vs_province
-    , CASE WHEN ip_city=1 OR cert_city=1 THEN -1 WHEN ip_city!=cert_city THEN 0 ELSE 1 END AS ip_city_vs_cert_city
-    , CASE WHEN ip_city=1 OR card_bin_city=1 THEN -1 WHEN ip_city!=card_bin_city THEN 0 ELSE 1 END AS ip_city_vs_card_bin_city
-    , CASE WHEN ip_city=1 OR card_mobile_city=1 THEN -1 WHEN ip_city!=card_mobile_city THEN 0 ELSE 1 END AS ip_city_vs_card_mobile_city
-    , CASE WHEN ip_city=1 OR card_cert_city=1 THEN -1 WHEN ip_city!=card_cert_city THEN 0 ELSE 1 END AS ip_city_vs_card_cert_city
-    , CASE WHEN ip_city=1 OR city=1 THEN -1 WHEN ip_city!=city THEN 0 ELSE 1 END AS ip_city_vs_city
-    , CASE WHEN cert_city=1 OR card_bin_city=1 THEN -1 WHEN cert_city!=card_bin_city THEN 0 ELSE 1 END AS cert_city_vs_card_bin_city
-    , CASE WHEN cert_city=1 OR card_mobile_city=1 THEN -1 WHEN cert_city!=card_mobile_city THEN 0 ELSE 1 END AS cert_city_vs_card_mobile_city
-    , CASE WHEN cert_city=1 OR card_cert_city=1 THEN -1 WHEN cert_city!=card_cert_city THEN 0 ELSE 1 END AS cert_city_vs_card_cert_city
-    , CASE WHEN cert_city=1 OR city=1 THEN -1 WHEN cert_city!=city THEN 0 ELSE 1 END AS cert_city_vs_city
-    , CASE WHEN card_bin_city=1 OR card_mobile_city=1 THEN -1 WHEN card_bin_city!=card_mobile_city THEN 0 ELSE 1 END AS card_bin_city_vs_card_mobile_city
-    , CASE WHEN card_bin_city=1 OR card_cert_city=1 THEN -1 WHEN card_bin_city!=card_cert_city THEN 0 ELSE 1 END AS card_bin_city_vs_card_cert_city
-    , CASE WHEN card_bin_city=1 OR city=1 THEN -1 WHEN card_bin_city!=city THEN 0 ELSE 1 END AS card_bin_city_vs_city
-    , CASE WHEN card_mobile_city=1 OR card_cert_city=1 THEN -1 WHEN card_mobile_city!=card_cert_city THEN 0 ELSE 1 END AS card_mobile_city_vs_card_cert_city
-    , CASE WHEN card_mobile_city=1 OR city=1 THEN -1 WHEN card_mobile_city!=city THEN 0 ELSE 1 END AS card_mobile_city_vs_city
-    , CASE WHEN card_cert_city=1 OR city=1 THEN -1 WHEN card_cert_city!=city THEN 0 ELSE 1 END AS card_cert_city_vs_city		
-FROM serialized_training
+SELECT t_main.*
+	, avg_prev_amt
+    , std_prev_amt
+    , max_prev_amt
+    , min_prev_amt
+FROM
+    (
+        SELECT *
+            , CASE WHEN ip_prov=1 OR cert_prov=1 THEN -1 WHEN ip_prov!=cert_prov THEN 0 ELSE 1 END AS ip_prov_vs_cert_prov
+            , CASE WHEN ip_prov=1 OR card_bin_prov=1 THEN -1 WHEN ip_prov!=card_bin_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_bin_prov
+            , CASE WHEN ip_prov=1 OR card_mobile_prov=1 THEN -1 WHEN ip_prov!=card_mobile_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_mobile_prov
+            , CASE WHEN ip_prov=1 OR card_cert_prov=1 THEN -1 WHEN ip_prov!=card_cert_prov THEN 0 ELSE 1 END AS ip_prov_vs_card_cert_prov
+            , CASE WHEN ip_prov=1 OR province=1 THEN -1 WHEN ip_prov!=province THEN 0 ELSE 1 END AS ip_prov_vs_province
+            , CASE WHEN cert_prov=1 OR card_bin_prov=1 THEN -1 WHEN cert_prov!=card_bin_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_bin_prov
+            , CASE WHEN cert_prov=1 OR card_mobile_prov=1 THEN -1 WHEN cert_prov!=card_mobile_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_mobile_prov
+            , CASE WHEN cert_prov=1 OR card_cert_prov=1 THEN -1 WHEN cert_prov!=card_cert_prov THEN 0 ELSE 1 END AS cert_prov_vs_card_cert_prov
+            , CASE WHEN cert_prov=1 OR province=1 THEN -1 WHEN cert_prov!=province THEN 0 ELSE 1 END AS cert_prov_vs_province
+            , CASE WHEN card_bin_prov=1 OR card_mobile_prov=1 THEN -1 WHEN card_bin_prov!=card_mobile_prov THEN 0 ELSE 1 END AS card_bin_prov_vs_card_mobile_prov
+            , CASE WHEN card_bin_prov=1 OR card_cert_prov=1 THEN -1 WHEN card_bin_prov!=card_cert_prov THEN 0 ELSE 1 END AS card_bin_prov_vs_card_cert_prov
+            , CASE WHEN card_bin_prov=1 OR province=1 THEN -1 WHEN card_bin_prov!=province THEN 0 ELSE 1 END AS card_bin_prov_vs_province
+            , CASE WHEN card_mobile_prov=1 OR card_cert_prov=1 THEN -1 WHEN card_mobile_prov!=card_cert_prov THEN 0 ELSE 1 END AS card_mobile_prov_vs_card_cert_prov
+            , CASE WHEN card_mobile_prov=1 OR province=1 THEN -1 WHEN card_mobile_prov!=province THEN 0 ELSE 1 END AS card_mobile_prov_vs_province
+            , CASE WHEN card_cert_prov=1 OR province=1 THEN -1 WHEN card_cert_prov!=province THEN 0 ELSE 1 END AS card_cert_prov_vs_province
+            , CASE WHEN ip_city=1 OR cert_city=1 THEN -1 WHEN ip_city!=cert_city THEN 0 ELSE 1 END AS ip_city_vs_cert_city
+            , CASE WHEN ip_city=1 OR card_bin_city=1 THEN -1 WHEN ip_city!=card_bin_city THEN 0 ELSE 1 END AS ip_city_vs_card_bin_city
+            , CASE WHEN ip_city=1 OR card_mobile_city=1 THEN -1 WHEN ip_city!=card_mobile_city THEN 0 ELSE 1 END AS ip_city_vs_card_mobile_city
+            , CASE WHEN ip_city=1 OR card_cert_city=1 THEN -1 WHEN ip_city!=card_cert_city THEN 0 ELSE 1 END AS ip_city_vs_card_cert_city
+            , CASE WHEN ip_city=1 OR city=1 THEN -1 WHEN ip_city!=city THEN 0 ELSE 1 END AS ip_city_vs_city
+            , CASE WHEN cert_city=1 OR card_bin_city=1 THEN -1 WHEN cert_city!=card_bin_city THEN 0 ELSE 1 END AS cert_city_vs_card_bin_city
+            , CASE WHEN cert_city=1 OR card_mobile_city=1 THEN -1 WHEN cert_city!=card_mobile_city THEN 0 ELSE 1 END AS cert_city_vs_card_mobile_city
+            , CASE WHEN cert_city=1 OR card_cert_city=1 THEN -1 WHEN cert_city!=card_cert_city THEN 0 ELSE 1 END AS cert_city_vs_card_cert_city
+            , CASE WHEN cert_city=1 OR city=1 THEN -1 WHEN cert_city!=city THEN 0 ELSE 1 END AS cert_city_vs_city
+            , CASE WHEN card_bin_city=1 OR card_mobile_city=1 THEN -1 WHEN card_bin_city!=card_mobile_city THEN 0 ELSE 1 END AS card_bin_city_vs_card_mobile_city
+            , CASE WHEN card_bin_city=1 OR card_cert_city=1 THEN -1 WHEN card_bin_city!=card_cert_city THEN 0 ELSE 1 END AS card_bin_city_vs_card_cert_city
+            , CASE WHEN card_bin_city=1 OR city=1 THEN -1 WHEN card_bin_city!=city THEN 0 ELSE 1 END AS card_bin_city_vs_city
+            , CASE WHEN card_mobile_city=1 OR card_cert_city=1 THEN -1 WHEN card_mobile_city!=card_cert_city THEN 0 ELSE 1 END AS card_mobile_city_vs_card_cert_city
+            , CASE WHEN card_mobile_city=1 OR city=1 THEN -1 WHEN card_mobile_city!=city THEN 0 ELSE 1 END AS card_mobile_city_vs_city
+            , CASE WHEN card_cert_city=1 OR city=1 THEN -1 WHEN card_cert_city!=city THEN 0 ELSE 1 END AS card_cert_city_vs_city
+            , DATEPART(TO_DATE(gmt_occur, 'yyyy-mm-dd hh'), 'hh') AS transaction_hour
+            , WEEKDAY(TO_DATE(gmt_occur, 'yyyy-mm-dd hh')) AS transaction_dow
+            , DATEPART(TO_DATE(gmt_occur, 'yyyy-mm-dd hh'), 'dd') AS transaction_dom
+            , DATEDIFF(TO_DATE(gmt_occur, 'yyyy-mm-dd hh'), TO_DATE((LAG(gmt_occur, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC)), 'yyyy-mm-dd hh'), 'hh') AS diff_hour
+            , DATEDIFF(TO_DATE(gmt_occur, 'yyyy-mm-dd hh'), TO_DATE((LAG(gmt_occur, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC)), 'yyyy-mm-dd hh'), 'dd') AS diff_day
+        	, CASE WHEN (LAG(ip_prov, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR ip_prov=1 THEN -1 WHEN ((LAG(ip_prov, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-ip_prov) != 0 THEN 0 ELSE 1 END AS ip_prov_vs_prev
+			, CASE WHEN (LAG(cert_prov, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR cert_prov=1 THEN -1 WHEN ((LAG(cert_prov, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-cert_prov) != 0 THEN 0 ELSE 1 END AS cert_prov_vs_prev
+			, CASE WHEN (LAG(card_bin_prov, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR card_bin_prov=1 THEN -1 WHEN ((LAG(card_bin_prov, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-card_bin_prov) != 0 THEN 0 ELSE 1 END AS card_bin_prov_vs_prev
+			, CASE WHEN (LAG(card_mobile_prov, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR card_mobile_prov=1 THEN -1 WHEN ((LAG(card_mobile_prov, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-card_mobile_prov) != 0 THEN 0 ELSE 1 END AS card_mobile_prov_vs_prev
+			, CASE WHEN (LAG(card_cert_prov, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR card_cert_prov=1 THEN -1 WHEN ((LAG(card_cert_prov, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-card_cert_prov) != 0 THEN 0 ELSE 1 END AS card_cert_prov_vs_prev
+			, CASE WHEN (LAG(province, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR province=1 THEN -1 WHEN ((LAG(province, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-province) != 0 THEN 0 ELSE 1 END AS province_vs_prev
+			, CASE WHEN (LAG(ip_city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR ip_city=1 THEN -1 WHEN ((LAG(ip_city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-ip_city) != 0 THEN 0 ELSE 1 END AS ip_city_vs_prev
+			, CASE WHEN (LAG(cert_city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR cert_city=1 THEN -1 WHEN ((LAG(cert_city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-cert_city) != 0 THEN 0 ELSE 1 END AS cert_city_vs_prev
+			, CASE WHEN (LAG(card_bin_city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR card_bin_city=1 THEN -1 WHEN ((LAG(card_bin_city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-card_bin_city) != 0 THEN 0 ELSE 1 END AS card_bin_city_vs_prev
+			, CASE WHEN (LAG(card_mobile_city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR card_mobile_city=1 THEN -1 WHEN ((LAG(card_mobile_city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-card_mobile_city) != 0 THEN 0 ELSE 1 END AS card_mobile_city_vs_prev
+			, CASE WHEN (LAG(card_cert_city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR card_cert_city=1 THEN -1 WHEN ((LAG(card_cert_city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-card_cert_city) != 0 THEN 0 ELSE 1 END AS card_cert_city_vs_prev
+			, CASE WHEN (LAG(city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR city=1 THEN -1 WHEN ((LAG(city, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-city) != 0 THEN 0 ELSE 1 END AS city_vs_prev
+            , CASE WHEN (LAG(client_ip, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR client_ip=1 THEN -1 WHEN ((LAG(client_ip, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-client_ip) != 0 THEN 0 ELSE 1 END AS client_ip_vs_prev
+            , CASE WHEN (LAG(network, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR network=1 THEN -1 WHEN ((LAG(network, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-network) != 0 THEN 0 ELSE 1 END AS network_vs_prev
+            , CASE WHEN (LAG(device_sign, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR device_sign=1 THEN -1 WHEN ((LAG(device_sign, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-device_sign) != 0 THEN 0 ELSE 1 END AS device_sign_vs_prev
+            , CASE WHEN (LAG(info_1, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR info_1=1 THEN -1 WHEN ((LAG(info_1, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-info_1) != 0 THEN 0 ELSE 1 END AS info_1_vs_prev
+            , CASE WHEN (LAG(info_2, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR info_2=1 THEN -1 WHEN ((LAG(info_2, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-info_2) != 0 THEN 0 ELSE 1 END AS info_2_vs_prev
+            , CASE WHEN (LAG(is_one_people, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR is_one_people=1 THEN -1 WHEN ((LAG(is_one_people, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-is_one_people) != 0 THEN 0 ELSE 1 END AS is_one_people_vs_prev
+            , CASE WHEN (LAG(mobile_oper_platform, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR mobile_oper_platform=1 THEN -1 WHEN ((LAG(mobile_oper_platform, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-mobile_oper_platform) != 0 THEN 0 ELSE 1 END AS mobile_oper_platform_vs_prev
+            , CASE WHEN (LAG(operation_channel, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR operation_channel=1 THEN -1 WHEN ((LAG(operation_channel, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-operation_channel) != 0 THEN 0 ELSE 1 END AS operation_channel_vs_prev
+            , CASE WHEN (LAG(pay_scene, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR pay_scene=1 THEN -1 WHEN ((LAG(pay_scene, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-pay_scene) != 0 THEN 0 ELSE 1 END AS pay_scene_vs_prev
+            , CASE WHEN (LAG(card_cert_no, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR card_cert_no=1 THEN -1 WHEN ((LAG(card_cert_no, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-card_cert_no) != 0 THEN 0 ELSE 1 END AS card_cert_no_vs_prev
+            , CASE WHEN (LAG(opposing_id, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR opposing_id=1 THEN -1 WHEN ((LAG(opposing_id, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-opposing_id) != 0 THEN 0 ELSE 1 END AS opposing_id_vs_prev
+            , CASE WHEN (LAG(income_card_no, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR income_card_no=1 THEN -1 WHEN ((LAG(income_card_no, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-income_card_no) != 0 THEN 0 ELSE 1 END AS income_card_no_vs_prev
+            , CASE WHEN (LAG(income_card_cert_no, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR income_card_cert_no=1 THEN -1 WHEN ((LAG(income_card_cert_no, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-income_card_cert_no) != 0 THEN 0 ELSE 1 END AS income_card_cert_no_vs_prev
+            , CASE WHEN (LAG(income_card_mobile, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR income_card_mobile=1 THEN -1 WHEN ((LAG(income_card_mobile, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-income_card_mobile) != 0 THEN 0 ELSE 1 END AS income_card_mobile_vs_prev
+            , CASE WHEN (LAG(income_card_bank_code, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR income_card_bank_code=1 THEN -1 WHEN ((LAG(income_card_bank_code, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-income_card_bank_code) != 0 THEN 0 ELSE 1 END AS income_card_bank_code_vs_prev
+            , CASE WHEN (LAG(is_peer_pay, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR is_peer_pay=1 THEN -1 WHEN ((LAG(is_peer_pay, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-is_peer_pay) != 0 THEN 0 ELSE 1 END AS is_peer_pay_vs_prev
+            , CASE WHEN (LAG(version, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))=1 OR version=1 THEN -1 WHEN ((LAG(version, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC))-version) != 0 THEN 0 ELSE 1 END AS version_vs_prev
+        FROM serialized_training
+    ) t_main
+    INNER JOIN
+    (
+        SELECT
+            event_id
+            , AVG(amt) AS avg_prev_amt
+            , STDDEV(amt) AS std_prev_amt
+            , MAX(amt) AS max_prev_amt
+            , MIN(amt) AS min_prev_amt
+        FROM 
+            (
+                SELECT t1.event_id
+                	, t2.amt
+                	
+                FROM atec_1000w_ins_data t1  --驱动表
+                    INNER JOIN atec_1000w_ins_data t2  --history
+                    ON t1.user_id = t2.user_id 
+                WHERE t1.gmt_occur >= t2.gmt_occur
+            )tmp  -- 汇总历史行为信息需要早于本笔时间
+        GROUP BY event_id
+    ) t_hist
+    ON t_main.event_id = t_hist.event_id
 
+DROP TABLE IF EXISTS test_yabin;
 CREATE TABLE test_yabin AS
 SELECT *
 	, CASE WHEN ip_prov=1 OR cert_prov=1 THEN -1 WHEN ip_prov!=cert_prov THEN 0 ELSE 1 END AS ip_prov_vs_cert_prov
@@ -390,5 +454,10 @@ SELECT *
     , CASE WHEN card_bin_city=1 OR city=1 THEN -1 WHEN card_bin_city!=city THEN 0 ELSE 1 END AS card_bin_city_vs_city
     , CASE WHEN card_mobile_city=1 OR card_cert_city=1 THEN -1 WHEN card_mobile_city!=card_cert_city THEN 0 ELSE 1 END AS card_mobile_city_vs_card_cert_city
     , CASE WHEN card_mobile_city=1 OR city=1 THEN -1 WHEN card_mobile_city!=city THEN 0 ELSE 1 END AS card_mobile_city_vs_city
-    , CASE WHEN card_cert_city=1 OR city=1 THEN -1 WHEN card_cert_city!=city THEN 0 ELSE 1 END AS card_cert_city_vs_city		
+    , CASE WHEN card_cert_city=1 OR city=1 THEN -1 WHEN card_cert_city!=city THEN 0 ELSE 1 END AS card_cert_city_vs_city
+    , DATEPART(TO_DATE(gmt_occur, 'yyyy-mm-dd hh'), 'hh') AS transaction_hour
+    , WEEKDAY(TO_DATE(gmt_occur, 'yyyy-mm-dd hh')) AS transaction_dow
+    , DATEPART(TO_DATE(gmt_occur, 'yyyy-mm-dd hh'), 'dd') AS transaction_dom
+    , DATEDIFF(TO_DATE(gmt_occur, 'yyyy-mm-dd hh'), TO_DATE((LAG(gmt_occur, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC)), 'yyyy-mm-dd hh'), 'hh') AS diff_hour
+    , DATEDIFF(TO_DATE(gmt_occur, 'yyyy-mm-dd hh'), TO_DATE((LAG(gmt_occur, 1) OVER (PARTITION BY user_id ORDER BY gmt_occur ASC)), 'yyyy-mm-dd hh'), 'dd') AS diff_day
 FROM serialized_test
